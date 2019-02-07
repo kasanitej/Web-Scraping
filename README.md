@@ -12,5 +12,5 @@ Main File is ocswssw.py(this will call info.py)
 Single Alphabet Folder Merge.py will Merge all the first file in the folder(with in folder) 
 Double Alphabet folder Merge.py wil merge all fileswith in the folder
 Active_inactive check will check whether a member is active or not.
----------------
 phase_2 script will extract info if its input is Registartion id
+
