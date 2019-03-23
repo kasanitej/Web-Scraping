@@ -1,8 +1,7 @@
 from urllib.request import urlopen
 from bs4 import BeautifulSoup as BS
 import bs4
-
-url = 'http://mb.211.ca/program-at-site/psychiatric-emergency-room-nurses-at-st-boniface-hospital/'
+from math import ceil
 
 def site_info(url):
     html = urlopen(url).read()
@@ -45,10 +44,54 @@ def site_info(url):
                 elif isinstance(li,bs4.element.NavigableString):
                     if len(li.strip())!=0: info[label] = li.strip()
 
-    url = Soup.find('header',{'class':'section-head'}).find('a')['href']
-    html = urlopen(url).read()
-    Soup = BS(html, 'lxml')
+    #Header Details
+    Header = Soup.find('header',{'class':'section-head'})
+    program = Header.find('h1').get_text()
+    print(program)
+    a = Header.find('a')
+    provider = a.get_text()
     #Agency Description
+    html = urlopen(a['href']).read()
+    Soup = BS(html, 'lxml')
     article_block = Soup.find('article',{'class':'article'})
-    info = {**info, **block_info(article_block)}
+    #Whole Details
+    info = {'Program': '=HYPERLINK("{}","{}")'.format(url, program),'provider': provider,**info, **block_info(article_block)}
     return info
+
+def list_to_str(Add_sevices):
+    serv = ''
+    for i in range(0, ceil(len(Add_sevices) / 5)):
+        serv += ','.join(Add_sevices[5 * i:(i + 1) * 5]) + '\n'
+    return serv
+
+def services(result, additional_services):
+    toggle = result.find('a', {'class': 'search-result-toggle'})
+    Add_sevices = []
+    if toggle:
+        No_Add_services = toggle.get_text().strip()
+        services = result.find('div', {'class': 'search-result-inner'}).find_all('li')
+        for service in services:
+            a = service.find('a')
+            if a['href'] == '#':
+                add_serv = a.get_text().strip()
+                Add_sevices.append(add_serv)
+            else:
+                if add_serv in additional_services.keys():
+                    additional_services[add_serv].append(a['href'])
+                else:
+                    additional_services[add_serv] = [a['href']]
+    serv = list_to_str(Add_sevices)[:-1]
+    return serv
+
+def dict_exchange(k):
+    url_dict = {}
+    urls = sum(k.values(),[])
+    urls = list(set(urls))
+    for url in urls:
+        for serv,addr_list in k.items():
+            if url in addr_list:
+                if url in url_dict.keys():
+                    url_dict[url].append(serv)
+                else:
+                    url_dict[url] = [serv]
+    return urls, url_dict
